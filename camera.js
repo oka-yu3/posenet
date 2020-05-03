@@ -69,7 +69,7 @@ class EnemyManager {
     constructor(canvasWidth, canvasHeight) {
         this._canvasWidth = canvasWidth;
         this._canvasHeight = canvasHeight;
-        this._enemyWidth = Math.floor(canvasWidth / 8);
+        this._enemyWidth = Math.floor(canvasWidth / 10);
         this._enemies = new Array();
         this._nextEnemyComingTime = 1000;
         this._totalElpseTime = 0;
