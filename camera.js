@@ -46,7 +46,7 @@ class Face {
     }
 
     draw(keypoints, ctx, scale = 1) {
-        let face = this._calcFacePosition(keypoints[3], keypoints[4]);
+        let face = this._calcFacePosition(keypoints[posenet.partIds['leftEar']], keypoints[posenet.partIds['rightEar']]);
         ctx.drawImage(
             this._image,
             (face.x - face.width / 2) * scale,
@@ -125,19 +125,25 @@ class Enemy {
         return this._isExpired;
     }
 
-    update(progressTimeInMillisec, rightWrist, scale) {
+    update(progressTimeInMillisec, keypoints, scale) {
         this._durationInMillisec += progressTimeInMillisec;
         this._isExpired = this._livePeriodInMillisec <= this._durationInMillisec;
-        if (this._isAlive && this._detectCollision(rightWrist, scale)) {
+        if (this._isAlive && this._detectCollision(keypoints, scale)) {
             this._isAlive = false;
             this._livePeriodInMillisec = this._durationInMillisec + 500;
         }
     }
 
-    _detectCollision(rightWrist, scale) {
-        let wristX = rightWrist.position.x * scale;
-        let wristY = rightWrist.position.y * scale;
-        return Math.abs(wristX - this._x) < this._enemyWidth && Math.abs(wristY - this._y) < this._enemyWidth
+    _detectCollision(keypoints, scale) {
+        let targets = ['leftWrist', 'rightWrist', 'leftAnkle', 'rightAnkle'].map((name) => {
+            return keypoints[posenet.partIds[name]];
+        });
+        let results = targets.filter(target =>
+            target.score > 0.5
+            && Math.abs(target.position.x * scale - this._x) < this._enemyWidth
+            && Math.abs(target.position.y * scale - this._y) < this._enemyWidth
+        );
+        return results.length > 0;
     }
 
     draw(ctx) {
@@ -263,24 +269,25 @@ function detectPoseInRealTime(video, net) {
 
     const enemyManager = new EnemyManager(canvasWidth, canvasHeight);
 
-    let lastTime = performance.now()
+    let lastTime = performance.now();
+    let remainingTime = 30 * 1000;
 
     async function poseDetectionFrame() {
         // Begin monitoring code for frames per second
         stats.begin();
 
-        let poses = [];
-        const pose = await net.estimatePoses(video, {
+        let poses = await net.estimatePoses(video, {
             flipHorizontal: true,
             decodingMethod: 'single-person'
         });
-        poses = poses.concat(pose);
+        let pose = poses[0];
+        let keypoints = pose.keypoints;
 
         let now = performance.now();
         let elapsedTime = now - lastTime;
+        remainingTime -= elapsedTime;
+        remainingTime = Math.max(0, remainingTime);
         lastTime = now;
-
-        enemyManager.update(elapsedTime, poses[0]["keypoints"][10], drawScale);
 
         ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -292,14 +299,24 @@ function detectPoseInRealTime(video, net) {
 
         ctx.save();
         ctx.scale(1, 1);
-        poses.forEach(({ score, keypoints }) => {
-            face.draw(keypoints, ctx, drawScale);
+
+        face.draw(keypoints, ctx, drawScale);
+
+        if (remainingTime > 0) {
+            enemyManager.update(elapsedTime, keypoints, drawScale);
             enemyManager.draw(ctx);
-            if (showKeypoints) {
-                drawKeypoints(keypoints, ctx, drawScale);
-                drawSkeleton(keypoints, ctx, drawScale);
-            }
-        });
+        }
+
+        if (showKeypoints) {
+            drawKeypoints(keypoints, ctx, drawScale);
+            drawSkeleton(keypoints, ctx, drawScale);
+        }
+
+        let remain = Math.round(remainingTime / 1000);
+        ctx.fillStyle = 'rgba(0, 0, 0)';
+        ctx.font = "50px serif";
+        ctx.fillText("残り " + remain + " 秒", 10, canvasHeight - 50);
+
         ctx.restore();
 
         // End monitoring code for frames per second
