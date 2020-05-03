@@ -8,7 +8,7 @@ const stats = new Stats();
 const posenetParams = {
     architecture: 'MobileNetV1',
     outputStride: 16,
-    inputResolution: { width: 640, height: 320 },
+    inputResolution: { width: 320, height: 160 },
     multiplier: 0.50,
     quantBytes: 2
 };
