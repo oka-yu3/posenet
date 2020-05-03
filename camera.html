@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.7.4/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/posenet@2.2.1/dist/posenet.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stats.js@0.17.0/build/stats.min.js"></script>
+    <style>
+        body {
+            margin: 0 0 0 0;
+        }
+    </style>
+    <title>PoseNet Demo</title>
+</head>
+
+<body>
+    <div id='main' style='display: block;'>
+        <video id='video' playsinline style="display: none;">
+        </video>
+        <canvas id='output'></canvas>
+    </div>
+    <script src="camera.js"></script>
+</body>
+
+</html>
