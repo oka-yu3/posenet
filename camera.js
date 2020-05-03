@@ -69,6 +69,7 @@ class EnemyManager {
     constructor(canvasWidth, canvasHeight) {
         this._canvasWidth = canvasWidth;
         this._canvasHeight = canvasHeight;
+        this._enemyWidth = Math.floor(canvasWidth / 8);
         this._enemies = new Array();
         this._nextEnemyComingTime = 1000;
         this._totalElpseTime = 0;
@@ -89,7 +90,7 @@ class EnemyManager {
                 let x = Math.floor(getRandomInclusive(0, this._canvasWidth));
                 let y = Math.floor(getRandomInclusive(0, this._canvasHeight));
                 let duration = Math.floor(getRandomInclusive(1, 3)) * 1000;
-                this._enemies.push(new Enemy(x, y, duration));
+                this._enemies.push(new Enemy(this._enemyWidth, x, y, duration));
             }
 
             this._nextEnemyComingTime = this._totalElpseTime + (getRandomInclusive(1, 2) * 1000);
@@ -104,7 +105,7 @@ class EnemyManager {
 }
 
 class Enemy {
-    constructor(x, y, livePeriodInMillisec) {
+    constructor(enemyWidth, x, y, livePeriodInMillisec) {
         this._smile = new Image();
         this._smile.src = "images/smile.png";
 
@@ -113,6 +114,7 @@ class Enemy {
 
         this._isExpired = false;
         this._isAlive = true;
+        this._enemyWidth = enemyWidth;
         this._x = x;
         this._y = y;
         this._livePeriodInMillisec = livePeriodInMillisec;
@@ -135,21 +137,25 @@ class Enemy {
     _detectCollision(rightWrist, scale) {
         let wristX = rightWrist.position.x * scale;
         let wristY = rightWrist.position.y * scale;
-        return Math.abs(wristX - this._x) < this._smile.width && Math.abs(wristY - this._y) < this._smile.height
+        return Math.abs(wristX - this._x) < this._enemyWidth && Math.abs(wristY - this._y) < this._enemyWidth
     }
 
     draw(ctx) {
         if (this._isAlive) {
             ctx.drawImage(
                 this._smile,
-                this._x - this._smile.width / 2,
-                this._y - this._smile.height / 2
+                this._x - this._enemyWidth / 2,
+                this._y - this._enemyWidth / 2,
+                this._enemyWidth,
+                this._enemyWidth
             );
         } else {
             ctx.drawImage(
                 this._dead,
-                this._x - this._dead.width / 2,
-                this._y - this._dead.height / 2
+                this._x - this._enemyWidth / 2,
+                this._y - this._enemyWidth / 2,
+                this._enemyWidth,
+                this._enemyWidth
             );
         }
     }
@@ -232,10 +238,10 @@ function detectPoseInRealTime(video, net) {
     const face = new Face("images/happy.png");
     const canvas = document.getElementById('output');
 
-    canvas.addEventListener("click", function () {
+    canvas.addEventListener("click", function (event) {
         canvas.requestFullscreen();
     }, false);
-    canvas.addEventListener("touchstart", function () {
+    canvas.addEventListener("touchstart", function (event) {
         canvas.requestFullscreen();
     }, false);
 
