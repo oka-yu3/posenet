@@ -232,6 +232,13 @@ function detectPoseInRealTime(video, net) {
     const face = new Face("images/happy.png");
     const canvas = document.getElementById('output');
 
+    canvas.addEventListener("click", function () {
+        canvas.requestFullscreen();
+    }, false);
+    canvas.addEventListener("touchstart", function () {
+        canvas.requestFullscreen();
+    }, false);
+
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
 
