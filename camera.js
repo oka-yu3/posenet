@@ -69,7 +69,7 @@ class EnemyManager {
     constructor(canvasWidth, canvasHeight) {
         this._canvasWidth = canvasWidth;
         this._canvasHeight = canvasHeight;
-        this._enemyWidth = Math.floor(canvasWidth / 10);
+        this._enemyWidth = Math.floor(canvasWidth / 8);
         this._enemies = new Array();
         this._nextEnemyComingTime = 1000;
         this._totalElpseTime = 0;
@@ -323,6 +323,10 @@ function setupFPS() {
 }
 
 async function bindPage() {
+    if (isMobile) {
+        setTimeout(function () { window.scrollTo(0, 1); }, 100);
+    }
+
     const net = await posenet.load(posenetParams);
 
     let video;
