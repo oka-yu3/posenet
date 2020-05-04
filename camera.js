@@ -1,5 +1,6 @@
 const idealWidth = 1280;
 const idealHeight = 720;
+const minPresition = 0.7;
 const debug = true;
 const showKeypoints = true;
 
@@ -185,7 +186,7 @@ class Enemy {
             return keypoints[posenet.partIds[name]];
         });
         let results = targets.filter(target =>
-            target.score > 0.85
+            target.score > minPresition
             && Math.abs(target.position.x * scale - this._x) < this._enemyWidth
             && Math.abs(target.position.y * scale - this._y) < this._enemyWidth
         );
@@ -356,11 +357,11 @@ function detectPoseInRealTime(video, net) {
         }
 
         let leftWrist = keypoints[posenet.partIds["leftWrist"]];
-        if (leftWrist.score > 0.85) {
+        if (leftWrist.score > minPresition) {
             leftHummer.draw(leftWrist.position.x, leftWrist.position.y, ctx, drawScale);
         }
         let rightWrist = keypoints[posenet.partIds["rightWrist"]];
-        if (rightWrist.score > 0.85) {
+        if (rightWrist.score > minPresition) {
             rightHummer.draw(rightWrist.position.x, rightWrist.position.y, ctx, drawScale);
         }
 
