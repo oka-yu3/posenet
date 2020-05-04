@@ -65,6 +65,39 @@ class Face {
     }
 }
 
+class Hummer {
+    constructor(canvasWidth, isFlip = false) {
+        this._image = new Image();
+        this._image.src = "images/pikopiko_hummer.png";
+        this._canvasWidth = canvasWidth;
+        this._width = Math.floor(canvasWidth / 8);
+        this._isFlip = isFlip;
+    }
+
+    draw(x, y, ctx, scale = 1) {
+        ctx.save();
+        if (this._isFlip) {
+            ctx.scale(-1, 1);
+            ctx.drawImage(
+                this._image,
+                - ((x + this._width / 2) * scale),
+                ((y - this._width / 2) * scale),
+                this._width,
+                this._width
+            );
+        } else {
+            ctx.drawImage(
+                this._image,
+                (x - this._width / 2) * scale,
+                (y - this._width / 2) * scale,
+                this._width,
+                this._width
+            );
+        }
+        ctx.restore();
+    }
+}
+
 class EnemyManager {
     constructor(canvasWidth, canvasHeight) {
         this._canvasWidth = canvasWidth;
@@ -73,13 +106,18 @@ class EnemyManager {
         this._enemies = new Array();
         this._nextEnemyComingTime = 1000;
         this._totalElpseTime = 0;
+        this._deadCount = 0;
     }
 
     update(progressTimeInMillisec, rightWrist, scale) {
         this._totalElpseTime += progressTimeInMillisec;
 
         this._enemies.forEach(enemy => {
+            let prevIsAlive = enemy.isAlive();
             enemy.update(progressTimeInMillisec, rightWrist, scale);
+            if (prevIsAlive && !enemy.isAlive()) {
+                this._deadCount++;
+            }
         });
 
         let newEnemies = this._enemies.filter(enemy => !enemy.isExpired());
@@ -101,6 +139,10 @@ class EnemyManager {
         this._enemies.forEach(enemy => {
             enemy.draw(ctx);
         });
+    }
+
+    getDeadCount() {
+        return this._deadCount;
     }
 }
 
@@ -125,6 +167,10 @@ class Enemy {
         return this._isExpired;
     }
 
+    isAlive() {
+        return this._isAlive;
+    }
+
     update(progressTimeInMillisec, keypoints, scale) {
         this._durationInMillisec += progressTimeInMillisec;
         this._isExpired = this._livePeriodInMillisec <= this._durationInMillisec;
@@ -135,11 +181,11 @@ class Enemy {
     }
 
     _detectCollision(keypoints, scale) {
-        let targets = ['leftWrist', 'rightWrist', 'leftAnkle', 'rightAnkle'].map((name) => {
+        let targets = ['leftWrist', 'rightWrist'].map((name) => {
             return keypoints[posenet.partIds[name]];
         });
         let results = targets.filter(target =>
-            target.score > 0.5
+            target.score > 0.85
             && Math.abs(target.position.x * scale - this._x) < this._enemyWidth
             && Math.abs(target.position.y * scale - this._y) < this._enemyWidth
         );
@@ -268,6 +314,8 @@ function detectPoseInRealTime(video, net) {
     const ctx = canvas.getContext('2d');
 
     const enemyManager = new EnemyManager(canvasWidth, canvasHeight);
+    const leftHummer = new Hummer(canvasWidth);
+    const rightHummer = new Hummer(canvasWidth, true);
 
     let lastTime = performance.now();
     let remainingTime = 30 * 1000;
@@ -300,11 +348,20 @@ function detectPoseInRealTime(video, net) {
         ctx.save();
         ctx.scale(1, 1);
 
-        face.draw(keypoints, ctx, drawScale);
+        // face.draw(keypoints, ctx, drawScale);
 
         if (remainingTime > 0) {
             enemyManager.update(elapsedTime, keypoints, drawScale);
             enemyManager.draw(ctx);
+        }
+
+        let leftWrist = keypoints[posenet.partIds["leftWrist"]];
+        if (leftWrist.score > 0.85) {
+            leftHummer.draw(leftWrist.position.x, leftWrist.position.y, ctx, drawScale);
+        }
+        let rightWrist = keypoints[posenet.partIds["rightWrist"]];
+        if (rightWrist.score > 0.85) {
+            rightHummer.draw(rightWrist.position.x, rightWrist.position.y, ctx, drawScale);
         }
 
         if (showKeypoints) {
@@ -313,9 +370,11 @@ function detectPoseInRealTime(video, net) {
         }
 
         let remain = Math.round(remainingTime / 1000);
-        ctx.fillStyle = 'rgba(0, 0, 0)';
+        let deadCount = enemyManager.getDeadCount();
+
+        ctx.fillStyle = 'orange';
         ctx.font = "50px serif";
-        ctx.fillText("残り " + remain + " 秒", 10, canvasHeight - 50);
+        ctx.fillText(`残り ${remain} 秒 ポイント ${deadCount}`, 10, canvasHeight - 50);
 
         ctx.restore();
 
