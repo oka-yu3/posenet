@@ -1,6 +1,6 @@
 const idealWidth = 1280;
 const idealHeight = 720;
-const minPresition = 0.7;
+const minPresition = 0.5;
 const debug = true;
 const showKeypoints = true;
 
